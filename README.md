@@ -1,6 +1,6 @@
-# Laundry Management System (MERN Stack)
+# Laundry Management System (LMS) - Premium MERN Edition
 
-A premium laundry management dashboard for Admin, Staff, and Customers.
+A professional, high-end laundry management ecosystem featuring a custom Blue & White theme, real-time tracking, and role-specific dashboards.
 
 ## 🚀 Getting Started
 
@@ -16,10 +16,12 @@ A premium laundry management dashboard for Admin, Staff, and Customers.
 3. `npm run dev` (Runs on http://localhost:5173)
 
 ## 🔑 Key Features
-- **Admin Restriction**: Only one primary admin can register.
-- **Three Dashboards**: Separate views for Admin, Staff, and Customers.
-- **Premium UI**: Modern dark/light modes with glassmorphism.
+- **Premium Blue Design**: Modern, professional aesthetic across all interfaces.
+- **Admin Command Center**: Real-time analytics, staff management, and global order monitoring.
+- **Staff Operations Hub**: Live pickup feed, integrated billing system, and claim/wash/dry workflow.
+- **Customer Experience**: Easy order placement with custom naming, service selection, and live status tracking.
+- **Integrated Billing**: Staff can calculate weight and generate bills directly from their dashboard.
 
 ## 🛠️ Tech Stack
-- **Frontend**: React, Vite, Axios, React Router.
+- **Frontend**: React, Vite, Axios, React Router, Custom CSS (Themed).
 - **Backend**: Node.js, Express, MongoDB, Mongoose, JWT, Bcrypt.
