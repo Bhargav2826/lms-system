@@ -82,7 +82,9 @@ const orderSchema = new mongoose.Schema({
     orderId: {
         type: String,
         unique: true
-    }
+    },
+    inspectionPhotos: [String],
+    inspectionNotes: String
 }, { timestamps: true });
 
 // Generate a readable sequential Order ID before saving

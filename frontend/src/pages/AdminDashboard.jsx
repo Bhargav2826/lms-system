@@ -75,9 +75,17 @@ const AdminDashboard = () => {
 
                     {activeTab === 'overview' && (
                         <div>
-                            <div style={{ marginBottom: '25px' }}>
-                                <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', margin: 0, fontWeight: '700' }}>Analytics</h2>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Real-time business insights.</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                                <div>
+                                    <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', margin: 0, fontWeight: '700' }}>Analytics</h2>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Real-time business insights.</p>
+                                </div>
+                                <button
+                                    onClick={() => window.open('http://localhost:5050/api/analytics/export', '_blank')}
+                                    style={{ padding: '10px 20px', background: '#10b981', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                >
+                                    📊 Download Full Report (Excel)
+                                </button>
                             </div>
                             <AdminAnalytics />
                         </div>

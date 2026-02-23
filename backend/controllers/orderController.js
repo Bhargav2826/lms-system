@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const { sendSMS } = require('../utils/messagingService');
 
 const createOrder = async (req, res) => {
     try {
@@ -18,6 +19,10 @@ const createOrder = async (req, res) => {
             orderType,
             billingStatus
         });
+
+        // Send confirmation SMS
+        await sendSMS(mobileNumber, `Hi ${customerName}, your Cocoon Order #${order.orderId} has been placed successfully. Track it on your dashboard!`);
+
         res.status(201).json(order);
     } catch (error) {
         console.error('Order Creation Error Detalles:', error);
@@ -61,6 +66,19 @@ const updateOrderStatus = async (req, res) => {
 
         const order = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // Real-time Notification
+        if (req.io) {
+            req.io.to(order.customer.toString()).emit('orderUpdate', {
+                orderId: order.orderId,
+                status: status,
+                message: `Order #${order.orderId} updated to ${status}`
+            });
+        }
+
+        // Send status update SMS
+        await sendSMS(order.mobileNumber, `Order #${order.orderId} Update: Your laundry is now '${status}'.`);
+
         res.json(order);
     } catch (error) {
         console.error('Order Creation Error Detalles:', JSON.stringify(error, null, 2));
@@ -78,6 +96,16 @@ const generateBill = async (req, res) => {
             { new: true }
         );
         if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // Real-time Notification
+        if (req.io) {
+            req.io.to(order.customer.toString()).emit('billingUpdate', {
+                orderId: order.orderId,
+                totalPrice,
+                message: `Bill generated for #${order.orderId}: Rs. ${totalPrice}`
+            });
+        }
+
         res.json(order);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -100,4 +128,25 @@ const assignOrder = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, getMyOrders, getAllOrders, updateOrderStatus, assignOrder, generateBill };
+const updateInspection = async (req, res) => {
+    try {
+        const { notes } = req.body;
+        const photoPaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+        const order = await Order.findByIdAndUpdate(
+            req.params.id,
+            {
+                inspectionNotes: notes,
+                $push: { inspectionPhotos: { $each: photoPaths } }
+            },
+            { new: true }
+        );
+
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+        res.json(order);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+module.exports = { createOrder, getMyOrders, getAllOrders, updateOrderStatus, assignOrder, generateBill, updateInspection };

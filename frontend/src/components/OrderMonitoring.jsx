@@ -110,6 +110,19 @@ const OrderMonitoring = () => {
                                             <option key={s._id} value={s._id}>{s.name}</option>
                                         ))}
                                     </select>
+                                    {order.inspectionNotes && (
+                                        <div style={{ marginTop: '10px', fontSize: '0.7rem', background: '#f8fafc', padding: '8px', borderRadius: '5px', border: '1px solid #e2e8f0' }}>
+                                            <div style={{ fontWeight: 'bold', color: '#64748b', marginBottom: '3px' }}>📋 Inspection Note:</div>
+                                            <div>{order.inspectionNotes}</div>
+                                            {order.inspectionPhotos?.length > 0 && (
+                                                <div style={{ display: 'flex', gap: '3px', marginTop: '5px' }}>
+                                                    {order.inspectionPhotos.map((p, i) => (
+                                                        <img key={i} src={`http://localhost:5050${p}`} alt="damage" style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '3px', cursor: 'pointer' }} onClick={() => window.open(`http://localhost:5050${p}`, '_blank')} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}

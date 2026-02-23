@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import OrderStatus from '../components/OrderStatus';
 import ServiceRequest from '../components/ServiceRequest';
+import { generateInvoice } from '../utils/invoiceGenerator';
+import { io } from 'socket.io-client';
 
 const CustomerDashboard = () => {
     const { user, logout } = useAuth();
@@ -27,9 +29,27 @@ const CustomerDashboard = () => {
 
     useEffect(() => {
         fetchOrders();
-        const interval = setInterval(fetchOrders, 5000); // Pulse every 5 seconds for instant updates
-        return () => clearInterval(interval);
-    }, [user.token]);
+
+        // Socket.io Setup
+        const socket = io('http://localhost:5050');
+        socket.emit('join', user._id);
+
+        socket.on('orderUpdate', (data) => {
+            alert(`🔔 Notification: ${data.message}`);
+            fetchOrders();
+        });
+
+        socket.on('billingUpdate', (data) => {
+            alert(`💰 Bill Generated: ${data.message}`);
+            fetchOrders();
+        });
+
+        const interval = setInterval(fetchOrders, 30000); // Pulse every 30s as fallback
+        return () => {
+            clearInterval(interval);
+            socket.disconnect();
+        };
+    }, [user._id, user.token]);
 
     const handleLogout = () => {
         logout();
@@ -140,6 +160,7 @@ const CustomerDashboard = () => {
                                         <th style={{ padding: '15px' }}>Weight</th>
                                         <th style={{ padding: '15px' }}>Amount</th>
                                         <th style={{ padding: '15px' }}>Status</th>
+                                        <th style={{ padding: '15px' }}>Invoice</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -150,6 +171,16 @@ const CustomerDashboard = () => {
                                             <td style={{ padding: '15px', fontSize: '0.85rem', fontWeight: 'bold' }}>₹{order.totalPrice || '0'}</td>
                                             <td style={{ padding: '15px' }}>
                                                 <span style={{ fontSize: '0.7rem', color: order.billingStatus === 'Billed' ? '#166534' : '#ef4444' }}>{order.billingStatus}</span>
+                                            </td>
+                                            <td style={{ padding: '15px' }}>
+                                                {order.billingStatus === 'Billed' && (
+                                                    <button
+                                                        onClick={() => generateInvoice(order)}
+                                                        style={{ padding: '5px 10px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '5px', fontSize: '0.7rem', cursor: 'pointer' }}
+                                                    >
+                                                        Download PDF
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -169,6 +200,26 @@ const CustomerDashboard = () => {
                                             <span style={{ fontWeight: '800', color: 'var(--primary-color)', fontSize: '0.9rem' }}>{order.status}</span>
                                         </div>
                                         <OrderStatus status={order.status} />
+
+                                        {order.inspectionNotes && (
+                                            <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '15px', borderLeft: '5px solid var(--primary-color)' }}>
+                                                <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>👕 Pre-Wash Inspection Report:</p>
+                                                <p style={{ margin: '5px 0', fontSize: '0.85rem', color: '#475569' }}>{order.inspectionNotes}</p>
+                                                {order.inspectionPhotos?.length > 0 && (
+                                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                                        {order.inspectionPhotos.map((photo, idx) => (
+                                                            <img
+                                                                key={idx}
+                                                                src={`http://localhost:5050${photo}`}
+                                                                alt="Damage report"
+                                                                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', cursor: 'pointer', border: '1px solid #e2e8f0' }}
+                                                                onClick={() => window.open(`http://localhost:5050${photo}`, '_blank')}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -191,6 +242,7 @@ const CustomerDashboard = () => {
                     100% { opacity: 0.3; transform: scale(0.8); }
                 }
             `}</style>
+
         </div>
     );
 };

@@ -11,6 +11,31 @@ const StaffDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [billingOrder, setBillingOrder] = useState(null);
     const [billData, setBillData] = useState({ weight: '', price: '' });
+    const [inspectionOrder, setInspectionOrder] = useState(null);
+    const [inspectionNotes, setInspectionNotes] = useState('');
+    const [inspectionPhotos, setInspectionPhotos] = useState([]);
+
+    const handleInspectionSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('notes', inspectionNotes);
+        inspectionPhotos.forEach(photo => formData.append('photos', photo));
+
+        try {
+            await axios.put(`http://localhost:5050/api/orders/${inspectionOrder._id}/inspection`, formData, {
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            setInspectionOrder(null);
+            setInspectionNotes('');
+            setInspectionPhotos([]);
+            fetchOrders();
+        } catch (err) {
+            console.error('Inspection upload failed');
+        }
+    };
 
     const fetchOrders = async () => {
         try {
@@ -182,6 +207,7 @@ const StaffDashboard = () => {
                                         </div>
 
                                         <div className="order-actions" style={{ display: 'flex', gap: '8px' }}>
+                                            <button onClick={() => setInspectionOrder(order)} style={{ background: '#64748b', color: 'white', padding: '10px 15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>📸 Inspect</button>
                                             {order.status === 'Pending' && <button onClick={() => updateStatus(order._id, 'Confirmed')} style={{ background: '#4f46e5', color: 'white', padding: '10px 15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>Claim</button>}
                                             {order.status === 'Confirmed' && <button onClick={() => updateStatus(order._id, 'Processing')} style={{ background: '#fbbf24', color: 'white', padding: '10px 15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>Wash</button>}
                                             {order.status === 'Processing' && <button onClick={() => updateStatus(order._id, 'Ready for Pickup')} style={{ background: '#10b981', color: 'white', padding: '10px 15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer' }}>Ready</button>}
@@ -266,6 +292,52 @@ const StaffDashboard = () => {
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <button type="button" onClick={() => setBillingOrder(null)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#f1f5f9', fontWeight: 'bold' }}>Cancel</button>
                                 <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--staff-color)', color: 'white', fontWeight: 'bold' }}>Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {inspectionOrder && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+                    <div style={{ background: 'white', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>📸 Pre-Wash Inspection</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', textAlign: 'center', marginBottom: '20px' }}>Note any existing damage or stains for Order #{inspectionOrder.orderId}</p>
+                        <form onSubmit={handleInspectionSubmit}>
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Photos (Max 5)</label>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={(e) => setInspectionPhotos(Array.from(e.target.files))}
+                                    style={{ width: '100%', padding: '10px', marginTop: '5px' }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '25px' }}>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Inspection Notes</label>
+                                <textarea
+                                    required
+                                    placeholder="e.g., Small tear on left sleeve, tea stain on collar"
+                                    style={{ width: '100%', padding: '12px', marginTop: '5px', borderRadius: '12px', border: '2px solid #e2e8f0', minHeight: '100px', fontFamily: 'inherit' }}
+                                    value={inspectionNotes}
+                                    onChange={(e) => setInspectionNotes(e.target.value)}
+                                />
+                            </div>
+
+                            {inspectionOrder.inspectionPhotos?.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Previously Uploaded:</p>
+                                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                        {inspectionOrder.inspectionPhotos.map((path, idx) => (
+                                            <img key={idx} src={`http://localhost:5050${path}`} alt="old" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '5px' }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button type="button" onClick={() => setInspectionOrder(null)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#f1f5f9', fontWeight: 'bold' }}>Cancel</button>
+                                <button type="submit" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--staff-color)', color: 'white', fontWeight: 'bold' }}>Save Inspection</button>
                             </div>
                         </form>
                     </div>
